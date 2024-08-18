@@ -46,6 +46,7 @@ class CountriesAPI {
 	public function getCountriesPaginated($options = array()) {
 		$pageLength = $options['pageLength'] ?? 25;
 		$pageNum = $options['pageNum'] ?? 1;
+		$name = $options['name'] ?? null;
 
 		// Use the helper function to fetch countries
 		$countries = $this->getCountries($options);
@@ -62,7 +63,17 @@ class CountriesAPI {
 			// Implement pagination
 			$start = ($pageNum - 1) * $pageLength;
 			$pagedCountries = array_slice($countries, $start, $pageLength);
-			$nextPage = $start + $pageLength < $totalCountries ? "/api/countries?pageNum=" . ($pageNum + 1) . "&pageLength=" . $pageLength : false;
+
+			// Construct the next page URL
+			if ($start + $pageLength < $totalCountries) {
+				$baseUrl = "/api/countries";
+				if ($name) {
+					$baseUrl .= "/name/" . urlencode($name);
+				}
+				$nextPage = $baseUrl . "?pageNum=" . ($pageNum + 1) . "&pageLength=" . $pageLength;
+			} else {
+				$nextPage = false;
+			}
 		}
 
 		// Trim unwanted properties
@@ -83,6 +94,7 @@ class CountriesAPI {
 		// Return the result as a JSON response
 		return $result;
 	}
+
 
 
 	public function getCountriesByRegions($options = array()) {

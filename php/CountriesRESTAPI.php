@@ -24,6 +24,9 @@ switch ($uriSegments[1] ?? null) {
 				if(isset($_REQUEST["fullText"]) && $_REQUEST["fullText"] == "true") {
 					$options["fullText"] = true;
 				}
+				if(isset($_REQUEST["pageNum"])) {
+					$options["pageNum"] = intval($_REQUEST["pageNum"]);
+				}
 				echo json_encode($api->getCountriesPaginated($options));
 			} else if(count($uriSegments) == 3) {
 				$countryCode = $uriSegments[2];
