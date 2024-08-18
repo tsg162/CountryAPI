@@ -266,11 +266,11 @@
     		copyToClipboard(jsonText);
     	});
 
-    	$('.prevPage').on('click', function() {
+    	$(document).on('click', '.prevPage:not(.disabled)', function() {
     		changePage(-1);
     	});
 
-    	$('.nextPage').on('click', function() {
+    	$(document).on('click', '.nextPage:not(.disabled)', function() {
     		changePage(1);
     	});
 
@@ -278,43 +278,54 @@
     });
 
     function runAPICall() {
-    	var queryType = $('#queryType').val();
-    	var selectedSection = $('#' + queryType);
+		var queryType = $('#queryType').val();
+		var selectedSection = $('#' + queryType);
 
-    	let queryInputEl = selectedSection.find('input[type=text]');
-    	let apiPath = apiPathMapping[queryType] || queryType.replace('_', '/');
-    	let url = 'api/' + apiPath;
+		let queryInputEl = selectedSection.find('input[type=text]');
+		let apiPath = apiPathMapping[queryType] || queryType.replace('_', '/');
+		let url = 'api/' + apiPath;
 
-    	if (queryInputEl.length > 0) {
-    		var queryInput = queryInputEl.val().trim();
-    		url += `/${encodeURIComponent(queryInput)}`;
-    	}
+		if (queryInputEl.length > 0) {
+			var queryInput = queryInputEl.val().trim();
+			if (queryInput) {
+				url += `/${encodeURIComponent(queryInput)}`;
+			}
+		}
 
-    	var urlParams = [];
-    	if (queryType === "countries_name2") {
-    		urlParams.push('fullText=true');
-    	}
+		var urlParams = [];
+		if (queryType === "countries_name2") {
+			urlParams.push('fullText=true');
+		}
 
-    	if (urlParams.length > 0) {
-    		url += '?' + urlParams.join("&");
-    	}
+		// Include page number and page length in the URL
+		let pageNum = parseInt(selectedSection.find('.pageNum').val()) || 1;
+		let pageLength = parseInt(selectedSection.find('.pageLength').val()) || 25;
 
-    	$.ajax({
-    		url: url,
-    		type: 'GET',
-    		dataType: 'json',
-    		success: function(data) {
-    			lastAPIResponse = data;
-    			displayResults();
-    			if (lastAPIResponse.hasOwnProperty("page")) {
-    				updatePaginationControls();
-    			}
-    		},
-    		error: function(xhr, status, error) {
-    			console.error('Error fetching data:', error);
-    		}
-    	});
-    }
+		urlParams.push(`pageNum=${pageNum}`);
+		urlParams.push(`pageLength=${pageLength}`);
+
+		if (urlParams.length > 0) {
+			url += '?' + urlParams.join("&");
+		}
+
+		$.ajax({
+			url: url,
+			type: 'GET',
+			dataType: 'json',
+			success: function(data) {
+				lastAPIResponse = data;
+				displayResults();
+				if (lastAPIResponse.hasOwnProperty("page")) {
+					updatePaginationControls();
+				}
+			},
+			error: function(xhr, status, error) {
+				console.error('Error fetching data:', error);
+			}
+		});
+	}
+
+
 
 
     function copyToClipboard(text) {
@@ -452,7 +463,7 @@
     		withQuotes: true
     	});
 
-    	// Store the lastAPIResponse in the #jsonOutput element for later use (e.g., copying)
+    	// Store the lastAPIResponse in the #jsonOutput element for later use
     	$jsonOutput.data('json', lastAPIResponse);
 
     	$('#copyJsonButton').show();
@@ -461,14 +472,16 @@
 
 
     function changePage(offset) {
-    	let pageNumInput = $('.pageNum:visible');
-    	let currentPage = parseInt(pageNumInput.val()) || 1;
-    	let newPage = currentPage + offset;
-    	if (newPage >= 1) {
-    		pageNumInput.val(newPage);
-    		runAPICall();
-    	}
-    }
+		let selectedSection = $('#' + $('#queryType').val());
+		let pageNumInput = selectedSection.find('.pageNum:visible');
+		let currentPage = parseInt(pageNumInput.val()) || 1;
+		let newPage = currentPage + offset;
+
+		if (newPage >= 1) {
+			pageNumInput.val(newPage);
+			runAPICall();
+		}
+	}
 
     function updatePaginationControls() {
     	let pageNumInput = $('.pageNum:visible');
