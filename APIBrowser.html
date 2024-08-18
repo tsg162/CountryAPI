@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Countries API Interface</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style type="text/css">
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        color: #333;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    .dark-mode {
+        background-color: #0a0a0a;
+        color: #f0f0f0;
+    }
+
+    button {
+        background: #0058ff;
+        color: white;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+    }
+
+    .dark-mode .json-string {
+        color: #FFF;
+    }
+
+    .dark-mode select, .dark-mode input {
+        background: #121212;
+        border: 1px solid #303030;
+        color: white;
+    }
+
+    .dark-mode .json-literal {
+        color: #FF00A7;
+    }
+
+    .main-container, body {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        box-sizing: border-box;
+    }
+
+    .main-container {
+        justify-content: space-between;
+        padding: 20px;
+    }
+
+    .form-section {
+        position: absolute;
+        width: 30%;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        height: 100%;
+        padding: 20px;
+        box-sizing: border-box;
+    }
+
+    .results-container {
+        position: absolute;
+        width: 70%;
+        left: 30%;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        height: 100%;
+        padding: 10px;
+        box-sizing: border-box;
+    }
+
+    .dark-mode .results-list, .dark-mode .results-json {
+        border: 1px solid #303030;
+    }
+
+    .dark-mode ul.json-dict, ol.json-array {
+        border-left: 1px dotted #232323;
+    }
+
+    .results-list {
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        width: 50%;
+        height: 100%;
+        overflow-y: auto;
+        float: left;
+        padding: 10px;
+    }
+
+    .toggle-dark-mode {
+        position: fixed;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        padding: 10px;
+        border: none;
+        background: none;
+        font-size: 24px;
+        z-index: 1000;
+    }
+
+    select, input, button {
+        padding: 8px;
+        margin-top: 5px;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 21px;
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    .smallNumField {
+        width: 161px;
+        float: left;
+        margin: 6px;
+    }
+
+    .results-json {
+        box-sizing: border-box;
+        border: 1px solid #ccc;
+        width: 50%;
+        height: 100%;
+        overflow-y: auto;
+        position: relative;
+        float: left;
+        padding-bottom: 50px;
+    }
+
+    #jsonOutput {
+        padding: 10px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 45px;
+        overflow-y: auto;
+    }
+
+    #copyJsonButton {
+        position: absolute;
+        bottom: 0px;
+        background-color: #0058ff;
+        color: white;
+        border: none;
+        border-radius: 0px;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    #copyJsonButton:hover {
+        background-color: #0041cc;
+    }
+
+    .pagination-controls {
+        display: flex;
+        align-items: center;
+        margin-left: 10px;
+    }
+
+    .pagination-controls button {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 0 5px;
+    }
+
+    .pagination-controls button.disabled {
+        color: #ccc;
+        cursor: not-allowed;
+    }
+
+    #documentation {
+        margin-top: 20px;
+        padding: 10px;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        font-size: 20px;
+        white-space: pre-wrap;
+		line-height: 20px;
+    }
+
+    .dark-mode #documentation {
+        background: #121212;
+    }
+
+    .prevPage, .nextPage {
+        color: #0064ff;
+    }
+
+    .prevPage.disabled, .nextPage.disabled {
+        color: gray;
+    }
+
+    .region-name, .language-name, .country-name {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+
+    .country-list, .region-list, .language-list {
+        margin-left: 20px;
+        margin-bottom: 20px;
+        font-size: 18px;
+    }
+
+    .country-list span, .region-list span, .language-list span {
+        display: block;
+        margin-bottom: 5px;
+    }
+	
+	.results-list b {
+	  color: #0040ff;
+	}
+
+	.dark-mode .results-list b {
+	  color: #00abff;
+	}
+
+</style>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jquery.json-viewer/json-viewer/jquery.json-viewer.css">
+<script src="https://cdn.jsdelivr.net/npm/jquery.json-viewer/json-viewer/jquery.json-viewer.js"></script>
+<script type="text/javascript">
+    var lastAPIResponse;
+    const apiPathMapping = {
+    	"countries_name2": "countries/name",
+    	"languages2": "languages/name",
+    	"regions_specific": "regions/name"
+    };
+    $(document).ready(function() {
+    	$('.toggle-dark-mode').on('click', function() {
+    		$('body').toggleClass('dark-mode');
+    		$(this).toggleClass('fa-sun fa-moon');
+    	});
+
+    	$(document).on('keyup', "input", function(e) {
+    		if (e.which == 13) {
+    			runAPICall();
+    		}
+    	});
+
+    	$('#queryType').on('change', function() {
+    		$('.dynamic-input').addClass('hidden');
+    		$('#' + $(this).val()).removeClass('hidden');
+    		updateDocumentation();
+    	});
+
+    	$('#goButton').on('click', function() {
+    		runAPICall();
+    	});
+
+    	$('#copyJsonButton').on('click', function() {
+    		let jsonText = JSON.stringify($('#jsonOutput').data('json'), null, 2);
+    		copyToClipboard(jsonText);
+    	});
+
+    	$('.prevPage').on('click', function() {
+    		changePage(-1);
+    	});
+
+    	$('.nextPage').on('click', function() {
+    		changePage(1);
+    	});
+
+    	updateDocumentation();
+    });
+
+    function runAPICall() {
+    	var queryType = $('#queryType').val();
+    	var selectedSection = $('#' + queryType);
+
+    	let queryInputEl = selectedSection.find('input[type=text]');
+    	let apiPath = apiPathMapping[queryType] || queryType.replace('_', '/');
+    	let url = 'api/' + apiPath;
+
+    	if (queryInputEl.length > 0) {
+    		var queryInput = queryInputEl.val().trim();
+    		url += `/${encodeURIComponent(queryInput)}`;
+    	}
+
+    	var urlParams = [];
+    	if (queryType === "countries_name2") {
+    		urlParams.push('fullText=true');
+    	}
+
+    	if (urlParams.length > 0) {
+    		url += '?' + urlParams.join("&");
+    	}
+
+    	$.ajax({
+    		url: url,
+    		type: 'GET',
+    		dataType: 'json',
+    		success: function(data) {
+    			lastAPIResponse = data;
+    			displayResults();
+    			if (lastAPIResponse.hasOwnProperty("page")) {
+    				updatePaginationControls();
+    			}
+    		},
+    		error: function(xhr, status, error) {
+    			console.error('Error fetching data:', error);
+    		}
+    	});
+    }
+
+
+    function copyToClipboard(text) {
+    	const tempTextArea = document.createElement('textarea');
+    	tempTextArea.value = text;
+    	document.body.appendChild(tempTextArea);
+    	tempTextArea.select();
+    	document.execCommand('copy');
+    	document.body.removeChild(tempTextArea);
+    }
+
+    function displayResults() {
+    	let $resultsList = $('.results-list');
+    	let $jsonOutput = $('#jsonOutput');
+
+    	$resultsList.empty(); // Clear previous results
+    	$jsonOutput.empty(); // Clear previous JSON
+
+    	if (lastAPIResponse.countries && lastAPIResponse.countries.length > 0) {
+    		$resultsList.append($('<div/>', {
+    			'class': 'country-name',
+    			'text': 'Countries'
+    		}));
+
+    		let $countryList = $('<div/>', {
+    			'class': 'country-list'
+    		});
+
+    		$.each(lastAPIResponse.countries, function(i, country) {
+    			let languages = country.languages ? Object.values(country.languages).join(', ') : 'Not specified';
+    			let regions = country.region || 'Not specified';
+
+    			let $countryDiv = $('<div/>', {
+    				'class': 'country-item'
+    			});
+
+    			$countryDiv.append($('<div/>', {
+    				'class': 'country-header',
+    				'html': '<b>' + country.flag + ' ' + country.name.common + '</b>'
+    			}));
+
+    			let $regionDiv = $('<div/>', {
+    				'class': 'country-region',
+    				'css': {
+    					'padding-left': '20px'
+    				},
+    				'html': 'Region: ' + regions
+    			});
+
+    			let $languageDiv = $('<div/>', {
+    				'class': 'country-languages',
+    				'css': {
+    					'padding-left': '20px'
+    				},
+    				'html': 'Languages: ' + languages
+    			});
+
+    			$countryDiv.append($regionDiv);
+    			$countryDiv.append($languageDiv);
+
+    			$countryList.append($countryDiv);
+    		});
+
+    		$resultsList.append($countryList);
+    	} else if (lastAPIResponse.regions && lastAPIResponse.regions.length > 0) {
+    		$resultsList.append($('<div/>', {
+    			'class': 'region-name',
+    			'text': 'Regions'
+    		}));
+
+    		$.each(lastAPIResponse.regions, function(i, regionObj) {
+    			let region = regionObj.region;
+    			let countries = regionObj.countries;
+
+    			let $regionDiv = $('<div/>', {
+    				'class': 'region-item'
+    			});
+
+    			$regionDiv.append($('<div/>', {
+    				'class': 'region-header',
+    				'html': '<b>' + region + '</b>'
+    			}));
+
+    			let $countriesDiv = $('<div/>', {
+    				'class': 'region-countries',
+    				'css': {
+    					'padding-left': '20px'
+    				},
+    				'html': 'Countries: ' + countries.map(c => c.commonName).join(', ')
+    			});
+
+    			$regionDiv.append($countriesDiv);
+    			$resultsList.append($regionDiv);
+    		});
+    	} else if (lastAPIResponse.languages && lastAPIResponse.languages.length > 0) {
+    		$resultsList.append($('<div/>', {
+    			'class': 'language-name',
+    			'text': 'Languages'
+    		}));
+
+    		$.each(lastAPIResponse.languages, function(i, languageObj) {
+    			let language = languageObj.language;
+    			let countries = languageObj.countries;
+
+    			let $languageDiv = $('<div/>', {
+    				'class': 'language-item'
+    			});
+
+    			$languageDiv.append($('<div/>', {
+    				'class': 'language-header',
+    				'html': '<b>' + language + '</b>'
+    			}));
+
+    			let $countriesDiv = $('<div/>', {
+    				'class': 'language-countries',
+    				'css': {
+    					'padding-left': '20px'
+    				},
+    				'html': 'Countries: ' + countries.map(c => c.commonName).join(', ')
+    			});
+
+    			$languageDiv.append($countriesDiv);
+    			$resultsList.append($languageDiv);
+    		});
+    	} else {
+    		$resultsList.append($('<div/>', {
+    			'class': 'result-item',
+    			'text': 'No results found'
+    		}));
+    	}
+
+    	// Use json-viewer to display JSON in the new #jsonOutput div
+    	$jsonOutput.jsonViewer(lastAPIResponse, {
+    		collapsed: false,
+    		withQuotes: true
+    	});
+
+    	// Store the lastAPIResponse in the #jsonOutput element for later use (e.g., copying)
+    	$jsonOutput.data('json', lastAPIResponse);
+
+    	$('#copyJsonButton').show();
+    }
+
+
+
+    function changePage(offset) {
+    	let pageNumInput = $('.pageNum:visible');
+    	let currentPage = parseInt(pageNumInput.val()) || 1;
+    	let newPage = currentPage + offset;
+    	if (newPage >= 1) {
+    		pageNumInput.val(newPage);
+    		runAPICall();
+    	}
+    }
+
+    function updatePaginationControls() {
+    	let pageNumInput = $('.pageNum:visible');
+    	let currentPage = parseInt(pageNumInput.val()) || 1;
+    	let pageLength = parseInt($('.pageLength:visible').val()) || 25;
+    	let resultsCount = $('.results-list .result-item').length;
+
+    	$('.prevPage:visible').toggleClass('disabled', currentPage <= 1);
+    	if (lastAPIResponse.nextPageUrl == false) {
+    		$('.nextPage:visible').addClass('disabled');
+    	} else {
+    		$('.nextPage:visible').removeClass('disabled');
+    	}
+
+    }
+
+    function updateDocumentation() {
+		var queryType = $('#queryType').val();
+		var docs = {
+			"countries": "<b>GET /api/countries</b>\n\nThis method retrieves a list of all countries. Use pagination parameters 'pageLength' and 'pageNum' to control the output.\n\n<b>Examples:</b>\n\nHTTP: GET /api/countries?pageLength=25&pageNum=1\n\ncURL: curl -X GET 'http://mycountryapi.com/api/countries?pageLength=25&pageNum=1'",
+			"countries_name": "<b>GET /api/countries/name/{name}</b>\n\nThis method searches countries by keyword. Use pagination parameters 'pageLength' and 'pageNum' to control the output.\n\n<b>Examples:</b>\n\nHTTP: GET /api/countries/name/Canada\n\ncURL: curl -X GET 'http://mycountryapi.com/api/countries/name/Canada'",
+			"countries_name2": "<b>GET /api/countries/name/{name}?fullText=true</b>\n\nThis method retrieves details for a specific country by name with the option to search for the full name.\n\n<b>Examples:</b>\n\nHTTP: GET /api/countries/name/Canada?fullText=true\n\ncURL: curl -X GET 'http://mycountryapi.com/api/countries/name/Canada?fullText=true'",
+			"languages": "<b>GET /api/languages</b>\n\nThis method retrieves a list of all languages with their associated countries.\n\n<b>Examples:</b>\n\nHTTP: GET /api/languages\n\ncURL: curl -X GET 'http://mycountryapi.com/api/languages'",
+			"languages2": "<b>GET /api/languages/name/{language}</b>\n\nThis method retrieves countries for a specific language or language code.\n\n<b>Examples:</b>\n\nHTTP: GET /api/languages/name/English\n\ncURL: curl -X GET 'http://mycountryapi.com/api/languages/name/English'",
+			"regions_all": "<b>GET /api/regions</b>\n\nThis method retrieves all regions and their associated countries.\n\n<b>Examples:</b>\n\nHTTP: GET /api/regions\n\ncURL: curl -X GET 'http://mycountryapi.com/api/regions'",
+			"regions_specific": "<b>GET /api/regions/name/{region}</b>\n\nThis method retrieves countries for a specific region or subregion.\n\n<b>Examples:</b>\n\nHTTP: GET /api/regions/name/Africa\n\ncURL: curl -X GET 'http://mycountryapi.com/api/regions/name/Africa'"
+		};
+		$('#documentation').html(docs[queryType]);
+	}
+
+</script>
+</head>
+<body class="dark-mode">
+<div class="toggle-dark-mode fa fa-moon"></div>
+<div class="main-container">
+    <div class="form-section">
+        <select id="queryType">
+            <option value="countries">Get All Countries</option>
+            <option value="countries_name">Search Countries By Keyword</option>
+            <option value="countries_name2">Lookup Country Details By Name</option>
+            <option value="languages">Get Countries By Language For All Languages</option>
+            <option value="languages2">Get Countries For Language</option>
+            <option value="regions_all">Get Countries By Region For All Regions</option>
+            <option value="regions_specific">Get Countries For Region</option>
+        </select>
+
+        <div id="countries" class="dynamic-input">
+            <div style="margin-top:7px">
+                <div class="smallNumField">
+                    <label>Page Length: <input type="number" class="pageLength" placeholder="Default 25"></label>
+                </div>
+                <div class="smallNumField">
+                    <label>Page Number: 
+                        <div class="pagination-controls">
+                            <button class="prevPage fas fa-chevron-left disabled"></button>
+                            <input type="number" class="pageNum" placeholder="1" style="width: 87px;">
+                            <button class="nextPage fas fa-chevron-right"></button>
+                        </div>
+                    </label>
+                </div>
+            </div>
+            <div style="clear:both"></div>
+        </div>
+        <div id="countries_name" class="dynamic-input hidden">
+            <input type="text" placeholder="Enter keyword">
+            <div style="margin-top:7px">
+                <div class="smallNumField">
+                    <label>Page Length: <input type="number" class="pageLength" placeholder="Default 25"></label>
+                </div>
+                <div class="smallNumField">
+                    <label>Page Number: 
+                        <div class="pagination-controls">
+                            <button class="prevPage fas fa-chevron-left disabled"></button>
+                            <input type="number" class="pageNum" placeholder="1" style="width: 87px;">
+                            <button class="nextPage fas fa-chevron-right"></button>
+                        </div>
+                    </label>
+                </div>
+                <div style="clear:both"></div>
+            </div>
+        </div>
+        <div id="countries_name2" class="dynamic-input hidden">
+            <input type="text" placeholder="Enter country name">
+        </div>
+        <div id="languages" class="dynamic-input hidden"></div>
+        <div id="languages2" class="dynamic-input hidden">
+            <input type="text" placeholder="Enter language or code">
+        </div>
+        <div id="regions_all" class="dynamic-input hidden"></div>
+        <div id="regions_specific" class="dynamic-input hidden">
+            <input type="text" placeholder="Enter region or subregion">
+        </div>
+        <button id="goButton">Go!</button>
+        <div id="documentation"></div>
+    </div>
+    <div class="results-container">
+        <div class="results-list"></div>
+        <div class="results-json">
+            <div id="jsonOutput"></div>
+            <button id="copyJsonButton" style="display:none">Copy JSON</button>
+        </div>
+        <div style="clear:both"></div>
+    </div>
+</div>
+</body>
+</html>
