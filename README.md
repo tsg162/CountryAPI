@@ -1,3 +1,6 @@
+## Overview
+This is a Nginx/ PHP API for providing country information in JSON format for client applications.  Also included is an API browser for trying out all the different methods/ parameters and viewing the result sets.
+
 ## Installation
 
 #### We'll use NGINX as the web server. Make a directory for the files, in this case `/var/www/html/CountriesREST` 
