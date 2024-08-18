@@ -2,16 +2,44 @@
 
 #### We'll use NGINX as the web server.  Make a directory for the files, in this case /var/www/html/CountriesREST 
 
+#### We'll use NGINX as the web server. Make a directory for the files, in this case `/var/www/html/CountriesREST` 
+
+```sh
 sudo mkdir -p /var/www/html/CountriesREST
- > Copy the html and php files into the directory
+```
+
+Copy the HTML and PHP files into the directory:
+
+```sh
 sudo chmod -R 755 /var/www/html/CountriesREST
 sudo chown -R www-data:www-data /var/www/html/CountriesREST
+```
 
- sudo nano /etc/nginx/sites-available/countryAPI.com
- > Paste the contents from nginxSiteConfig.txt from this repo in this new site configuration file, make sure to change the domain name to match your domain
- > Make sure you have Nginx and php fpm installed and use the correct path to the php-fpm.sock for example: unix:/run/php/php7.4-fpm.sock;
- sudo ln -s /etc/nginx/sites-available/countryAPI.com /etc/nginx/sites-enabled/countryAPI.com
- sudo service nginx restart
+Edit the NGINX site configuration:
+
+```sh
+sudo nano /etc/nginx/sites-available/countryAPI.com
+```
+
+Paste the contents from `nginxSiteConfig.txt` from this repo into this new site configuration file. Make sure to change the domain name to match your domain.
+
+Make sure you have NGINX and PHP-FPM installed, and use the correct path to the `php-fpm.sock`, for example:
+
+```sh
+unix:/run/php/php7.4-fpm.sock;
+```
+
+Create a symbolic link to enable the site:
+
+```sh
+sudo ln -s /etc/nginx/sites-available/countryAPI.com /etc/nginx/sites-enabled/countryAPI.com
+```
+
+Restart NGINX:
+
+```sh
+sudo service nginx restart
+```
  
 ## API Endpoints
 
