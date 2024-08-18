@@ -1,7 +1,5 @@
 ## Installation
 
-#### We'll use NGINX as the web server.  Make a directory for the files, in this case /var/www/html/CountriesREST 
-
 #### We'll use NGINX as the web server. Make a directory for the files, in this case `/var/www/html/CountriesREST` 
 
 ```sh
@@ -18,7 +16,7 @@ sudo chown -R www-data:www-data /var/www/html/CountriesREST
 Edit the NGINX site configuration:
 
 ```sh
-sudo nano /etc/nginx/sites-available/countryAPI.com
+sudo nano /etc/nginx/sites-available/mycountryapi.com
 ```
 
 Paste the contents from `nginxSiteConfig.txt` from this repo into this new site configuration file. Make sure to change the domain name to match your domain.
@@ -32,7 +30,7 @@ unix:/run/php/php7.4-fpm.sock;
 Create a symbolic link to enable the site:
 
 ```sh
-sudo ln -s /etc/nginx/sites-available/countryAPI.com /etc/nginx/sites-enabled/countryAPI.com
+sudo ln -s /etc/nginx/sites-available/mycountryapi.com /etc/nginx/sites-enabled/mycountryapi.com
 ```
 
 Restart NGINX:
